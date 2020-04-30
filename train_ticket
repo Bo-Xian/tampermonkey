@@ -1,0 +1,101 @@
+// ==UserScript==
+// @name         台鐵搶票腳本(快速)
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  台東人的驕傲
+// @author       Xian
+// @match        https://www.railway.gov.tw/tra-tip-web/tip/tip001/tip121/query
+// @grant        none
+// ==/UserScript==
+var IdNum = 'V121610774';//身分證字號
+var changeSeat = true;//可接受同班車換座位 (true=可接受)
+var oneWay = true;//單程或來回 (true = 單程) (來回not yet)
+var setPrefer = 0;//座位偏好 (0 = 不指定) (1 = 桌型座優先) (2 = 親子車廂優先 not yet)
+var ticketNum = 1;//要訂幾張票
+var stratStation = "1000-臺北";//出發站代號(代碼查詢:https://www.railway.gov.tw/tra-tip-web/tip/tip001/tip111/view)
+var endStation = "6000-臺東";//抵達站代號(1000-臺北)(6000-臺東)(7000-花蓮)
+var trainNumber = "666";//車次號碼
+var date = "2020/05/02";//日期
+//function block
+function xpath(query) {//find object by name
+    return document.evaluate(query, document, null,XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+}
+
+function buttonClicked(node){//click function by name
+    var evt = document.createEvent("MouseEvents");
+    evt.initMouseEvent("click", true, true, window,0, 0, 0, 0, 0, false, false, false, false, 0, null);
+    var allowDefault = node.dispatchEvent(evt);
+}
+
+function Idinput(node){//input text to textarea
+    //var evt = document.createEvent("KeyboardEvent");
+    //evt.initKeyboardEvent("keydown",true,true,document.defaultView,"a",0,"Shift",0);
+    //var allowDefault = node.dispatchEvent(evt);
+
+    //document.getElementById("pid").value = IdNum
+}
+
+
+//main
+var once = 0;
+var i = 0;
+
+if(once==0){
+
+    //可接受同班車換座位
+    if(changeSeat){
+        var btnITags = xpath("//input[@name='ticketOrderParamList[0].chgSeat']");
+        if ( btnITags.snapshotLength > 0){
+            buttonClicked(btnITags.snapshotItem(0));
+        }
+    }
+
+    //單程or來回
+    if(!oneWay){
+        var oneway = xpath("//input[@title='去回']");
+        if ( oneway.snapshotLength > 0){
+            buttonClicked(oneway.snapshotItem(0));
+        }
+    }
+
+    //座位偏好
+    if(setPrefer == 1){
+        var seatType1 = xpath("//input[@title='桌型座優先']");
+        if ( seatType1.snapshotLength > 0){
+            buttonClicked(seatType1.snapshotItem(0));
+        }
+    }else if(setPrefer == 2){
+        var seatType2 = xpath("//input[@value='WITH_CHILD']");
+        if ( seatType2.snapshotLength > 0){
+            buttonClicked(seatType2.snapshotItem(0));
+        }
+    }
+
+    //車票張數
+    if(ticketNum != 1 && ticketNum>0){
+        var ticketnum = xpath("//button[@title='增加']");
+        for(i=1;i<ticketNum;i++){
+            if ( ticketnum.snapshotLength > 0){
+                buttonClicked(ticketnum.snapshotItem(0));
+            }
+        }
+    }
+
+    //輸入身分證字號
+    document.getElementById("pid").value = IdNum;
+
+    //出發站
+    document.getElementById("startStation").value = stratStation;
+
+    //抵達站
+    document.getElementById("endStation").value = endStation;
+
+
+    //車次
+    document.getElementById("trainNoList1").value = trainNumber;
+
+    //日期
+    document.getElementById("rideDate1").value = date;
+
+    once++;
+}
